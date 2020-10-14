@@ -7,12 +7,14 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/pion/sdp"
 	"github.com/pion/webrtc/v2"
 	"github.com/imtiyazs/webrtc-remote-desktop/internal/encoders"
 	"github.com/imtiyazs/webrtc-remote-desktop/internal/rdisplay"
+	"github.com/imtiyazs/webrtc-remote-desktop/internal/signal"
 )
 
 // RemoteScreenPeerConn is a webrtc.PeerConnection wrapper that implements the
@@ -123,6 +125,32 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 			p.Close()
 		}
 		log.Printf("Connection state: %s \n", connState.String())
+	})
+
+	// Register data channel creation handling
+	peerConn.OnDataChannel(func(d *webrtc.DataChannel) {
+		fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
+
+		// Register channel opening handling
+		d.OnOpen(func() {
+			fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
+
+			for range time.NewTicker(5 * time.Second).C {
+				message := signal.RandSeq(15)
+				fmt.Printf("Sending '%s'\n", message)
+
+				// Send the message as text
+				sendErr := d.SendText(message)
+				if sendErr != nil {
+					panic(sendErr)
+				}
+			}
+		})
+
+		// Register text message handling
+		d.OnMessage(func(msg webrtc.DataChannelMessage) {
+			fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
+		})
 	})
 
 	track, err := peerConn.NewTrack(
