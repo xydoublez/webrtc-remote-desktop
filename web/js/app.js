@@ -66,9 +66,58 @@ function startRemoteSession(screen, remoteVideoNode, stream) {
       pc = new RTCPeerConnection({
         iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
       });
-      pc.ontrack = (evt) => {
-        console.info("ontrack triggered");
 
+      const dataChannel = pc.createDataChannel("messages");
+
+      dataChannel.onopen = function (event) {
+        // Start sending mouse cordinates on mouse move in canvas
+        const remoteCanvas = document.getElementById("remote-canvas");
+        remoteCanvas.addEventListener("mousemove", (event) => {
+          const rect = remoteCanvas.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+
+          dataChannel.send(
+            JSON.stringify({
+              command: "mousemove",
+              data: {
+                x: x.toFixed(0),
+                y: y.toFixed(0),
+              },
+            })
+          );
+        });
+
+        // Fetch screen size from server
+        dataChannel.send(
+          JSON.stringify({
+            command: "screensize",
+          })
+        );
+      };
+
+      dataChannel.onmessage = function (event) {
+        try {
+          const message = JSON.parse(event.data);
+          switch (message.command) {
+            case "screensize":
+              const canvas = document.getElementById("remote-canvas");
+              const video = document.getElementById("remote-video");
+              canvas.width = video.width;
+              canvas.height = video.height;
+              console.log(message);
+              break;
+
+            case "mousepose":
+              console.log(message);
+              break;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      };
+
+      pc.ontrack = (evt) => {
         remoteVideoNode.srcObject = evt.streams[0];
         remoteVideoNode.play();
       };
@@ -77,14 +126,13 @@ function startRemoteSession(screen, remoteVideoNode, stream) {
         stream.getTracks().forEach((track) => {
           pc.addTrack(track, stream);
         });
+
       return createOffer(pc, { audio: false, video: true });
     })
     .then((offer) => {
-      console.info(offer);
       return startSession(offer, screen);
     })
     .then((answer) => {
-      console.info(answer);
       return pc.setRemoteDescription(
         new RTCSessionDescription({
           sdp: answer,
@@ -95,33 +143,25 @@ function startRemoteSession(screen, remoteVideoNode, stream) {
     .then(() => pc);
 }
 
+function resizeCanvas(canvas, video) {
+  const w = video.offsetWidth;
+  const h = video.offsetHeight;
+  canvas.width = w;
+  canvas.height = h;
+}
+
 let peerConnection = null;
 document.addEventListener("DOMContentLoaded", () => {
   let selectedScreen = 0;
   const remoteVideo = document.querySelector("#remote-video");
-  const screenSelect = document.querySelector("#screen-select");
+  const remoteCanvas = document.querySelector("#remote-canvas");
   const startStop = document.querySelector("#start-stop");
 
-  loadScreens()
-    .then((response) => {
-      while (screenSelect.firstChild) {
-        screenSelect.removeChild(screenSelect.firstChild);
-      }
-      screenSelect.appendChild(document.createElement("option"));
-      response.screens.forEach((screen) => {
-        const option = document.createElement("option");
-        option.appendChild(
-          document.createTextNode("Screen " + (screen.index + 1))
-        );
-        option.setAttribute("value", screen.index);
-        screenSelect.appendChild(option);
-      });
-    })
-    .catch(showError);
-
-  screenSelect.addEventListener("change", (evt) => {
-    selectedScreen = parseInt(evt.currentTarget.value, 10);
-  });
+  remoteVideo.onplaying = () => {
+    setInterval(() => {
+      resizeCanvas(remoteCanvas, remoteVideo);
+    }, 1000);
+  };
 
   const enableStartStop = (enabled) => {
     if (enabled) {

@@ -1,20 +1,21 @@
 package rtc
 
 import (
+	"encoding/json"
 	"fmt"
 	"image"
 	"log"
 	"math/rand"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/tidwall/sjson"
 	"github.com/pion/sdp"
 	"github.com/pion/webrtc/v2"
 	"github.com/imtiyazs/webrtc-remote-desktop/internal/encoders"
+	"github.com/go-vgo/robotgo"
 	"github.com/imtiyazs/webrtc-remote-desktop/internal/rdisplay"
-	"github.com/imtiyazs/webrtc-remote-desktop/internal/signal"
 )
 
 // RemoteScreenPeerConn is a webrtc.PeerConnection wrapper that implements the
@@ -33,6 +34,10 @@ func findBestCodec(sdp *sdp.SessionDescription, encService encoders.Service, h26
 	var vp8Codec *webrtc.RTPCodec
 	for _, md := range sdp.MediaDescriptions {
 		for _, format := range md.MediaName.Formats {
+			if format == "webrtc-datachannel" {
+				continue
+			}
+
 			intPt, err := strconv.Atoi(format)
 			payloadType := uint8(intPt)
 			sdpCodec, err := sdp.GetCodecForPayloadType(payloadType)
@@ -56,9 +61,11 @@ func findBestCodec(sdp *sdp.SessionDescription, encService encoders.Service, h26
 	if vp8Codec != nil && encService.Supports(encoders.VP8Codec) {
 		return vp8Codec, encoders.VP8Codec, nil
 	}
+
 	if h264Codec != nil && encService.Supports(encoders.H264Codec) {
 		return h264Codec, encoders.H264Codec, nil
 	}
+
 	return nil, encoders.NoCodec, fmt.Errorf("Couldn't find a matching codec")
 }
 
@@ -97,6 +104,7 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	mediaEngine := webrtc.MediaEngine{}
 	mediaEngine.RegisterCodec(webrtcCodec)
 
@@ -115,42 +123,19 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	
 	p.connection = peerConn
 
 	peerConn.OnICEConnectionStateChange(func(connState webrtc.ICEConnectionState) {
 		if connState == webrtc.ICEConnectionStateConnected {
 			p.start()
 		}
+
 		if connState == webrtc.ICEConnectionStateDisconnected {
 			p.Close()
 		}
+		
 		log.Printf("Connection state: %s \n", connState.String())
-	})
-
-	// Register data channel creation handling
-	peerConn.OnDataChannel(func(d *webrtc.DataChannel) {
-		fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
-
-		// Register channel opening handling
-		d.OnOpen(func() {
-			fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
-
-			for range time.NewTicker(5 * time.Second).C {
-				message := signal.RandSeq(15)
-				fmt.Printf("Sending '%s'\n", message)
-
-				// Send the message as text
-				sendErr := d.SendText(message)
-				if sendErr != nil {
-					panic(sendErr)
-				}
-			}
-		})
-
-		// Register text message handling
-		d.OnMessage(func(msg webrtc.DataChannelMessage) {
-			fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
-		})
 	})
 
 	track, err := peerConn.NewTrack(
@@ -159,8 +144,6 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 		uuid.New().String(),
 		fmt.Sprintf("remote-screen"),
 	)
-
-	log.Printf("Using codec %s (%d) %s", webrtcCodec.Name, webrtcCodec.PayloadType, webrtcCodec.SDPFmtpLine)
 
 	direction := getTrackDirection(&sdp)
 
@@ -212,6 +195,70 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+
+	// Register data channel creation handling
+	peerConn.OnDataChannel(func(d *webrtc.DataChannel) {
+
+		// Register channel opening handling
+		// d.OnOpen(func() {
+		// 	fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
+		// })
+
+		type WSSMessage struct {
+			Command string
+			Data interface{}
+		}
+
+		incomingMessage := &WSSMessage{}
+
+		// Register text message handling
+		d.OnMessage(func(msg webrtc.DataChannelMessage) {
+
+			if err = json.Unmarshal(msg.Data, incomingMessage); err != nil {
+				log.Fatal(err)
+				return
+			}
+
+			switch incomingMessage.Command {
+			case "screensize":
+				screen := p.grabber.Screen()
+				screenSize := make(map[string]interface{})
+				screenSize["width"] = screen.Bounds.Dx()
+				screenSize["height"] = screen.Bounds.Dy()
+
+				// Create response
+				response, _ := sjson.Set("", "command", incomingMessage.Command)
+				response, _ = sjson.Set(response, "data", screenSize)
+				err := d.SendText(response)
+				if err != nil {
+					log.Fatal(err)
+				}
+				break
+
+			case "mousemove":
+				m, ok := incomingMessage.Data.(map[string]interface{})
+				if !ok {
+					return
+				}
+
+				// string to int
+				x, err := strconv.Atoi(m["x"].(string))
+				if err != nil {
+					return
+				}
+
+				y, err := strconv.Atoi(m["y"].(string))
+				if err != nil {
+					return
+				}
+
+				robotgo.MoveMouse(x, y)
+				break
+			}
+		})
+	})
+
 	return answer.SDP, nil
 }
 
