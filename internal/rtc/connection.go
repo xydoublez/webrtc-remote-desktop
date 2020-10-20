@@ -255,6 +255,23 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 
 				robotgo.MoveMouse(x, y)
 				break
+
+			case "click":
+				robotgo.Click()
+				break
+
+			case "dblclick":
+				robotgo.Click("", true)
+				break
+
+			case "keydown":
+				m, ok := incomingMessage.Data.(map[string]interface{})
+				if !ok {
+					return
+				}
+
+				robotgo.KeyTap(m["keyCode"].(string))
+				break
 			}
 		})
 	})

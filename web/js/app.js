@@ -58,6 +58,83 @@ function createOffer(pc, { audio, video }) {
   });
 }
 
+function enableMouseEvents(dataChannel) {
+  // Start sending mouse cordinates on mouse move in canvas
+  const remoteCanvas = document.getElementById("remote-canvas");
+
+  // On Mouse move
+  remoteCanvas.addEventListener("mousemove", (event) => {
+    // Get cordinates
+    const cordinates = scaleCordinatesToOriginalScreen(event);
+
+    // Send cordinates
+    dataChannel.send(
+      JSON.stringify({
+        command: "mousemove",
+        data: {
+          x: cordinates.x,
+          y: cordinates.y,
+        },
+      })
+    );
+  });
+
+  // On Mouse Click
+  remoteCanvas.addEventListener("click", (event) => {
+    dataChannel.send(
+      JSON.stringify({
+        command: "click",
+      })
+    );
+  });
+
+  // On Mouse Double Click
+  remoteCanvas.addEventListener("dblclick", (event) => {
+    dataChannel.send(
+      JSON.stringify({
+        command: "dblclick",
+      })
+    );
+  });
+
+  // Read keyboard events
+  document.addEventListener("keydown", (event) => {
+    console.log(event.keyCode);
+    dataChannel.send(
+      JSON.stringify({
+        command: "keydown",
+        data: {
+          keyCode: event.keyCode,
+        },
+      })
+    );
+  });
+}
+
+let resolutionMap = {
+  screenWidth: 0,
+  screenHeight: 0,
+  canvasWidth: 0,
+  canvasHeight: 0,
+};
+
+function scaleCordinatesToOriginalScreen(event) {
+  const remoteCanvas = document.getElementById("remote-canvas");
+  // Get canvas size
+  const rect = remoteCanvas.getBoundingClientRect();
+  // Get mouse cordinates on canvas
+  const x = (event.clientX - rect.left).toFixed(0);
+  const y = (event.clientY - rect.top).toFixed(0);
+  // Calculate screen percentage based on canvas
+  const xPer = (x / resolutionMap.canvasWidth) * 100;
+  const yPer = (y / resolutionMap.canvasHeight) * 100;
+  // Map percentage to original screen
+  return {
+    x: ((resolutionMap.screenWidth * xPer) / 100).toFixed(0),
+    y: ((resolutionMap.screenHeight * yPer) / 100).toFixed(0),
+  };
+}
+
 function startRemoteSession(screen, remoteVideoNode, stream) {
   let pc;
 
@@ -70,23 +147,7 @@ function startRemoteSession(screen, remoteVideoNode, stream) {
       const dataChannel = pc.createDataChannel("messages");
 
       dataChannel.onopen = function (event) {
-        // Start sending mouse cordinates on mouse move in canvas
-        const remoteCanvas = document.getElementById("remote-canvas");
-        remoteCanvas.addEventListener("mousemove", (event) => {
-          const rect = remoteCanvas.getBoundingClientRect();
-          const x = event.clientX - rect.left;
-          const y = event.clientY - rect.top;
-
-          dataChannel.send(
-            JSON.stringify({
-              command: "mousemove",
-              data: {
-                x: x.toFixed(0),
-                y: y.toFixed(0),
-              },
-            })
-          );
-        });
+        enableMouseEvents(dataChannel);
 
         // Fetch screen size from server
         dataChannel.send(
@@ -101,11 +162,8 @@ function startRemoteSession(screen, remoteVideoNode, stream) {
           const message = JSON.parse(event.data);
           switch (message.command) {
             case "screensize":
-              const canvas = document.getElementById("remote-canvas");
-              const video = document.getElementById("remote-video");
-              canvas.width = video.width;
-              canvas.height = video.height;
-              console.log(message);
+              resolutionMap.screenHeight = message.data.height;
+              resolutionMap.screenWidth = message.data.width;
               break;
 
             case "mousepose":
@@ -148,6 +206,9 @@ function resizeCanvas(canvas, video) {
   const h = video.offsetHeight;
   canvas.width = w;
   canvas.height = h;
+
+  resolutionMap.canvasHeight = h;
+  resolutionMap.canvasWidth = w;
 }
 
 let peerConnection = null;
