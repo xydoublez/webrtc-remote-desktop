@@ -1,6 +1,6 @@
 ## WebRTC Remote Desktop
 
-WebRTC Remote Desktop allows you to control the computers remotely (like any other RDP softwares) using WebRTC from modern browsers. The backend is a pure GO implmentation using Pion WebRTC.
+GO based WebRTC Remote Desktop allows you to control the computers remotely (like any other RDP softwares) using WebRTC from modern browsers. The backend is a pure GO implmentation using Pion WebRTC.
 
 <hr>
 
