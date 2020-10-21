@@ -20,7 +20,7 @@ The project is inspired from "WebRTC remote screen (https://github.com/rviscarra
 
 ### Dependencies
 
-- [Go 1.12] + (https://golang.org/doc/install)
+- Go 1.12+ (https://golang.org/doc/install)
 - If you want h264 support: libx264 (included in x264-go, you'll need a C compiler / assembler to build it)
 - If you want VP8 support: libvpx
 
