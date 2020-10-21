@@ -14,6 +14,7 @@ import (
 	"github.com/pion/sdp"
 	"github.com/pion/webrtc/v2"
 	"github.com/imtiyazs/webrtc-remote-desktop/internal/encoders"
+	"github.com/imtiyazs/webrtc-remote-desktop/internal/config"
 	"github.com/go-vgo/robotgo"
 	"github.com/imtiyazs/webrtc-remote-desktop/internal/rdisplay"
 )
@@ -252,11 +253,29 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 				break
 
 			case "click":
-				robotgo.Click()
+				m, ok := incomingMessage.Data.(map[string]interface{})
+				if !ok {
+					return
+				}
+
+				robotgo.Click(m["button"].(string), false)
 				break
 
 			case "dblclick":
-				robotgo.Click("", true)
+				m, ok := incomingMessage.Data.(map[string]interface{})
+				if !ok {
+					return
+				}
+
+				robotgo.Click(m["button"].(string), true)
+				break
+
+			case "mousescroll":
+				m, ok := incomingMessage.Data.(map[string]interface{})
+				if !ok {
+					return
+				}
+				robotgo.ScrollMouse(5, m["direction"].(string))
 				break
 
 			case "keydown":
@@ -265,8 +284,7 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 					return
 				}
 
-				fmt.Println(m["keyCode"].(string))
-				// robotgo.KeyTap(m["keyCode"].(string))
+				robotgo.KeyTap(config.RobotGoJSKeyMap[m["keyCode"].(float64)])
 				break
 
 			case "terminate":

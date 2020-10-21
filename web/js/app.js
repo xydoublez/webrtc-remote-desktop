@@ -77,23 +77,82 @@ function enableMouseEvents(dataChannel) {
   });
 
   // On Mouse Click
-  remoteCanvas.addEventListener("click", (event) => {
+  remoteCanvas.addEventListener("mousedown", (event) => {
+    let button = "left";
+
+    switch (event.which) {
+      case 1:
+        button = "left";
+        break;
+
+      case 2:
+        button = "center";
+        break;
+
+      case 3:
+        button = "right";
+        break;
+
+      default:
+        button = "left";
+    }
+
     dataChannel.send(
       JSON.stringify({
         command: "click",
+        data: {
+          button,
+        },
       })
     );
   });
 
   // On Mouse Double Click
   remoteCanvas.addEventListener("dblclick", (event) => {
+    let button = "left";
+
+    switch (event.which) {
+      case 1:
+        button = "left";
+        break;
+
+      case 2:
+        button = "center";
+        break;
+
+      case 3:
+        button = "right";
+        break;
+
+      default:
+        button = "left";
+    }
+
     dataChannel.send(
       JSON.stringify({
         command: "dblclick",
+        data: {
+          button,
+        },
       })
     );
   });
 
+  // On Mouse Scroll
+  remoteCanvas.addEventListener("wheel", (event) => {
+    const delta = Math.sign(event.deltaY);
+    const direction = delta > 0 ? "down" : "up";
+    dataChannel.send(
+      JSON.stringify({
+        command: "mousescroll",
+        data: {
+          direction,
+        },
+      })
+    );
+  });
+
+  /** DOCUMENT LEVEL EVENT LISTENERS */
   // Read keyboard events
   document.addEventListener("keydown", (event) => {
     console.log(event.keyCode);
@@ -233,6 +292,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedScreen = 0;
   const remoteVideo = document.querySelector("#remote-video");
   const remoteCanvas = document.querySelector("#remote-canvas");
+  // Disable right click context on canvas
+  remoteCanvas.oncontextmenu = function (e) {
+    e.preventDefault();
+  };
+
   const startStop = document.querySelector("#start-stop");
 
   remoteVideo.onplaying = () => {
