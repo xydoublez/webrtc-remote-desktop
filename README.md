@@ -10,6 +10,14 @@ The project is inspired from "WebRTC remote screen (https://github.com/rviscarra
 
 <hr>
 
+### Features
+
+* Remote screen viewing
+* Mouse controls ( Move, Click, Double Click )
+... still updating
+
+<hr>
+
 ### Dependencies
 
 - [Go 1.12](https://golang.org/doc/install)
