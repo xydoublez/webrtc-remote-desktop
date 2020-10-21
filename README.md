@@ -10,16 +10,12 @@ The project is inspired from "WebRTC remote screen (https://github.com/rviscarra
 - If you want h264 support: libx264 (included in x264-go, you'll need a C compiler / assembler to build it)
 - If you want VP8 support: libvpx
 
-### Running the server
+### Run in development mode
 
-The server receives the following flags through the command line:
+- git clone https://github.com/imtiyazs/webrtc-remote-desktop.git
+- cd webrtc-remote-desktop
+- go mod tidy
+- go run -tags "h264enc" cmd/agent.go
 
-`--http.port` (Optional)
-
-Specifies the port where the HTTP server should listen, by default the port 9000 is used.
-
-`--stun.server` (Optional)
-
-Allows to speficy a different [STUN](https://es.wikipedia.org/wiki/STUN) server, by default a Google STUN server is used.
-
-Chrome 74+, Firefox 66+, Safari 12.x are supported. Older versions (within reason) should be supported as well but YMMV.
+- For H264 stream: "h264enc"
+- For VP8 stream: "vp8enc"
