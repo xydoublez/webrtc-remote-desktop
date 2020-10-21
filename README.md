@@ -28,7 +28,7 @@ go run -tags "h264enc" cmd/agent.go
 ```
 Optional Params:
 * ```--http.port=8888```
-* ```--stun.server=stun:stun.l.google.com:19302
+* ```--stun.server=stun:stun.l.google.com:19302```
 
 - For H264 stream: "h264enc"
 - For VP8 stream: "vp8enc"
