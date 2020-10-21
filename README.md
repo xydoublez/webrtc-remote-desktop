@@ -9,6 +9,7 @@ WebRTC Remote Desktop allows you to control the computers remotely (like any oth
 The project is inspired from "WebRTC remote screen (https://github.com/rviscarra/webrtc-remote-screen)" by <a href="https://github.com/rviscarra">Rafael Viscarra</a>. Thanks for such a lovely contribution <a href="https://github.com/rviscarra">Rafael Viscarra</a>.
 
 <hr>
+
 ### Dependencies
 
 - [Go 1.12](https://golang.org/doc/install)
@@ -16,6 +17,7 @@ The project is inspired from "WebRTC remote screen (https://github.com/rviscarra
 - If you want VP8 support: libvpx
 
 <hr>
+
 ### Running in development mode
 
 ```
@@ -27,6 +29,7 @@ go run -tags "h264enc" cmd/agent.go
 
 - For H264 stream: "h264enc"
 - For VP8 stream: "vp8enc"
+
 <hr>
 
 ### Contributing
@@ -35,6 +38,7 @@ Amazing people responsible for making this possible:
 * <a href="https://github.com/pion/webrtc">Pion WebRTC</a>
 
 <hr>
+
 ### License
 
 MIT - see [LICENSE](LICENSE) for the full text.
