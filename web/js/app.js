@@ -1,22 +1,19 @@
+let peerConnection = null;
+let dataChannel = null;
+
+let resolutionMap = {
+  screenWidth: 0,
+  screenHeight: 0,
+  canvasWidth: 0,
+  canvasHeight: 0,
+};
+
 function showError(error) {
   const errorNode = document.querySelector("#error");
   if (errorNode.firstChild) {
     errorNode.removeChild(errorNode.firstChild);
   }
   errorNode.appendChild(document.createTextNode(error.message || error));
-}
-
-function loadScreens() {
-  return fetch("/api/screens", {
-    method: "GET",
-    headers: {
-      Accepts: "application/json",
-    },
-  })
-    .then((res) => {
-      return res.json();
-    })
-    .catch(showError);
 }
 
 function startSession(offer, screen) {
@@ -111,13 +108,6 @@ function enableMouseEvents(dataChannel) {
   });
 }
 
-let resolutionMap = {
-  screenWidth: 0,
-  screenHeight: 0,
-  canvasWidth: 0,
-  canvasHeight: 0,
-};
-
 function scaleCordinatesToOriginalScreen(event) {
   const remoteCanvas = document.getElementById("remote-canvas");
   // Get canvas size
@@ -144,7 +134,7 @@ function startRemoteSession(screen, remoteVideoNode, stream) {
         iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
       });
 
-      const dataChannel = pc.createDataChannel("messages");
+      dataChannel = pc.createDataChannel("messages");
 
       dataChannel.onopen = function (event) {
         enableMouseEvents(dataChannel);
@@ -211,7 +201,34 @@ function resizeCanvas(canvas, video) {
   resolutionMap.canvasWidth = w;
 }
 
-let peerConnection = null;
+function disconnectSession() {
+  dataChannel.send(
+    JSON.stringify({
+      command: "terminate",
+    })
+  );
+
+  peerConnection.close();
+  peerConnection = null;
+  enableStartStop(true);
+  setStartStopTitle("Connect");
+}
+
+const enableStartStop = (enabled) => {
+  const startStop = document.querySelector("#start-stop");
+  if (enabled) {
+    startStop.removeAttribute("disabled");
+  } else {
+    startStop.setAttribute("disabled", "");
+  }
+};
+
+const setStartStopTitle = (title) => {
+  const startStop = document.querySelector("#start-stop");
+  startStop.removeChild(startStop.firstChild);
+  startStop.appendChild(document.createTextNode(title));
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   let selectedScreen = 0;
   const remoteVideo = document.querySelector("#remote-video");
@@ -222,19 +239,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(() => {
       resizeCanvas(remoteCanvas, remoteVideo);
     }, 1000);
-  };
-
-  const enableStartStop = (enabled) => {
-    if (enabled) {
-      startStop.removeAttribute("disabled");
-    } else {
-      startStop.setAttribute("disabled", "");
-    }
-  };
-
-  const setStartStopTitle = (title) => {
-    startStop.removeChild(startStop.firstChild);
-    startStop.appendChild(document.createTextNode(title));
   };
 
   startStop.addEventListener("click", () => {
@@ -254,14 +258,11 @@ document.addEventListener("DOMContentLoaded", () => {
           .catch(showError)
           .then(() => {
             enableStartStop(true);
-            setStartStopTitle("Stop");
+            setStartStopTitle("Disconnect");
           });
       });
     } else {
-      peerConnection.close();
-      peerConnection = null;
-      enableStartStop(true);
-      setStartStopTitle("Start");
+      disconnectSession();
       remoteVideo.style.setProperty("visibility", "collapse");
     }
   });

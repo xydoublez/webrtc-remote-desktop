@@ -200,11 +200,6 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 	// Register data channel creation handling
 	peerConn.OnDataChannel(func(d *webrtc.DataChannel) {
 
-		// Register channel opening handling
-		// d.OnOpen(func() {
-		// 	fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
-		// })
-
 		type WSSMessage struct {
 			Command string
 			Data interface{}
@@ -270,8 +265,15 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 					return
 				}
 
-				robotgo.KeyTap(m["keyCode"].(string))
+				fmt.Println(m["keyCode"].(string))
+				// robotgo.KeyTap(m["keyCode"].(string))
 				break
+
+			case "terminate":
+				err := peerConn.Close()
+				if err != nil {
+					log.Panic(err)
+				}
 			}
 		})
 	})

@@ -53,34 +53,6 @@ func MakeHandler(webrtc rtc.Service, display rdisplay.Service) http.Handler {
 
 		w.Write(payload)
 	})
-
-	mux.HandleFunc("/screens", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		screens, err := display.Screens()
-
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		screensPayload := make([]screenPayload, len(screens))
-
-		for i, s := range screens {
-			screensPayload[i].Index = s.Index
-		}
-		payload, err := json.Marshal(screensResponse{
-			Screens: screensPayload,
-		})
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		w.Write(payload)
-	})
+	
 	return mux
 }
