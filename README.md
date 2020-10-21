@@ -6,7 +6,7 @@ WebRTC Remote Desktop allows you to control the computers remotely (like any oth
 
 ### Insipiration
 
-The project is inspired from "WebRTC remote screen (https://github.com/rviscarra/webrtc-remote-screen)" by <a href="https://github.com/rviscarra">Rafael Viscarra</a>. Thanks for such a lovely contribution <a href="https://github.com/rviscarra">Rafael Viscarra</a>.
+The project is inspired from "WebRTC remote screen (https://github.com/rviscarra/webrtc-remote-screen)". Thanks for such a lovely contribution <a href="https://github.com/rviscarra">Rafael Viscarra</a>.
 
 <hr>
 
