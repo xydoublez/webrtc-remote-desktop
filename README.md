@@ -61,7 +61,7 @@ ssh -L YOUR_LOCAL_PORT:localhost:9000
 Then access the application on `https://localhost:YOUR_LOCAL_PORT`, localhost should be considered 
 secure by modern browsers.
 
-* <b>TIP: For production, you need to write your own gateway server to communicate with the computers behind the NAT else assign a public ip and open up the TCP ports.</b>
+* <b>Tip for production: You need to write your own gateway server for exchanging SDP with the computers behind the NAT.</b>
 
 <hr>
 
