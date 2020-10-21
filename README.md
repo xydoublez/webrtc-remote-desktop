@@ -1,6 +1,6 @@
 ## WebRTC Remote Desktop
 
-WebRTC Remote Desktop allows you to control the computers remotely (like any other RDP softwares) using WebRTC. The backend is a pure GO implmentation using Pion WebRTC.
+WebRTC Remote Desktop allows you to control the computers remotely (like any other RDP softwares) using WebRTC from modern browsers. The backend is a pure GO implmentation using Pion WebRTC.
 
 <hr>
 
@@ -32,6 +32,25 @@ Optional Params:
 
 - For H264 stream: "h264enc"
 - For VP8 stream: "vp8enc"
+
+<hr>
+
+### Building for production
+Build the _deployment_ package by runnning `make`. This should create a tar file with the 
+binary and web directory, by default only support for h264 is included, if you want to use VP8 run `make encoders=vp8`, if you want both then `make encoders=vp8,h264`.
+
+Copy the archive to a remote server, decompress it and run `./agent`. The `agent` application assumes the web dir. is in the same directory. 
+
+WebRTC requires a _secure_ domain to work, the recommended approach towards this is to forward the agent port thru SSH tunneling:
+
+```bash
+ssh -L YOUR_LOCAL_PORT:localhost:9000 
+```
+
+Then access the application on `http://localhost:YOUR_LOCAL_PORT`, localhost should be considered 
+secure by modern browsers.
+
+*TIP: For production, you need to write your own gateway server to communicate with the computers behind the NAT else assign a public ip and open up the TCP ports.*
 
 <hr>
 
