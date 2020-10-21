@@ -1,18 +1,14 @@
-## WebRTC remote desktop
+## WebRTC Remote Desktop
 
 ### Insipiration
 
-The project is inspired from "WebRTC remote view (https://github.com/imtiyazs/webrtc-remote-desktop)", extending the capabilities to control the desktops using webRTC. Thanks for such a lovely contribution rviscarra.
+The project is inspired from "WebRTC remote screen (https://github.com/rviscarra/webrtc-remote-screen)" by rviscarra. Thanks for such a lovely contribution @rviscarra.
 
 ### Dependencies
 
 - [Go 1.12](https://golang.org/doc/install)
 - If you want h264 support: libx264 (included in x264-go, you'll need a C compiler / assembler to build it)
 - If you want VP8 support: libvpx
-
-### Architecture
-
-![Architecture](docs/architecture.png)
 
 ### Running the server
 
@@ -27,16 +23,3 @@ Specifies the port where the HTTP server should listen, by default the port 9000
 Allows to speficy a different [STUN](https://es.wikipedia.org/wiki/STUN) server, by default a Google STUN server is used.
 
 Chrome 74+, Firefox 66+, Safari 12.x are supported. Older versions (within reason) should be supported as well but YMMV.
-
-### Building the server
-
-Build the _deployment_ package by runnning `make`. This should create a tar file with the
-binary and web directory, by default only support for h264 is included, if you want to use VP8 run `make encoders=vp8`, if you want both then `make encoders=vp8,h264`.
-
-Copy the archive to a remote server, decompress it and run `./agent`. The `agent` application assumes the web dir. is in the same directory.
-
-WebRTC requires a _secure_ domain to work, the recommended approach towards this is to forward the agent port thru SSH tunneling:
-
-### License
-
-MIT - see [LICENSE](LICENSE) for the full text.
