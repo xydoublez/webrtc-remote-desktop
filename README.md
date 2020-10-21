@@ -26,6 +26,9 @@ cd webrtc-remote-desktop
 go mod tidy
 go run -tags "h264enc" cmd/agent.go
 ```
+
+Open https://localhost:9000 in the browser
+
 Optional Params:
 * ```--http.port=8888```
 * ```--stun.server=stun:stun.l.google.com:19302```
@@ -47,7 +50,7 @@ WebRTC requires a _secure_ domain to work, the recommended approach towards this
 ssh -L YOUR_LOCAL_PORT:localhost:9000 
 ```
 
-Then access the application on `http://localhost:YOUR_LOCAL_PORT`, localhost should be considered 
+Then access the application on `https://localhost:YOUR_LOCAL_PORT`, localhost should be considered 
 secure by modern browsers.
 
 * <b>TIP: For production, you need to write your own gateway server to communicate with the computers behind the NAT else assign a public ip and open up the TCP ports.</b>
