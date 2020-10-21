@@ -70,6 +70,7 @@ secure by modern browsers.
 Amazing people responsible for making this possible:
 * <a href="https://github.com/rviscarra">Rafael Viscarra</a>
 * <a href="https://github.com/pion/webrtc">Pion WebRTC</a>
+* <a href="https://github.com/go-vgo/robotgo">RobotGo</a> - <a href="https://github.com/vcaesar">vcaesar</a>
 
 <hr>
 
