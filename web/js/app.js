@@ -55,6 +55,18 @@ function createOffer(pc, { audio, video }) {
   });
 }
 
+function sendDataMessage(command, data) {
+  if (dataChannel) {
+    // Send cordinates
+    dataChannel.send(
+      JSON.stringify({
+        command: command,
+        data: data,
+      })
+    );
+  }
+}
+
 function enableMouseEvents(dataChannel) {
   // Start sending mouse cordinates on mouse move in canvas
   const remoteCanvas = document.getElementById("remote-canvas");
@@ -65,15 +77,10 @@ function enableMouseEvents(dataChannel) {
     const cordinates = scaleCordinatesToOriginalScreen(event);
 
     // Send cordinates
-    dataChannel.send(
-      JSON.stringify({
-        command: "mousemove",
-        data: {
-          x: cordinates.x,
-          y: cordinates.y,
-        },
-      })
-    );
+    sendDataMessage("mousemove", {
+      x: cordinates.x,
+      y: cordinates.y,
+    });
   });
 
   // On Mouse Click
@@ -97,14 +104,9 @@ function enableMouseEvents(dataChannel) {
         button = "left";
     }
 
-    dataChannel.send(
-      JSON.stringify({
-        command: "click",
-        data: {
-          button,
-        },
-      })
-    );
+    sendDataMessage("click", {
+      button,
+    });
   });
 
   // On Mouse Double Click
@@ -128,42 +130,26 @@ function enableMouseEvents(dataChannel) {
         button = "left";
     }
 
-    dataChannel.send(
-      JSON.stringify({
-        command: "dblclick",
-        data: {
-          button,
-        },
-      })
-    );
+    sendDataMessage("dblclick", {
+      button,
+    });
   });
 
   // On Mouse Scroll
   remoteCanvas.addEventListener("wheel", (event) => {
     const delta = Math.sign(event.deltaY);
     const direction = delta > 0 ? "down" : "up";
-    dataChannel.send(
-      JSON.stringify({
-        command: "mousescroll",
-        data: {
-          direction,
-        },
-      })
-    );
+    sendDataMessage("mousescroll", {
+      direction,
+    });
   });
 
   /** DOCUMENT LEVEL EVENT LISTENERS */
   // Read keyboard events
   document.addEventListener("keydown", (event) => {
-    console.log(event.keyCode);
-    dataChannel.send(
-      JSON.stringify({
-        command: "keydown",
-        data: {
-          keyCode: event.keyCode,
-        },
-      })
-    );
+    sendDataMessage("keydown", {
+      keyCode: event.keyCode,
+    });
   });
 }
 
@@ -199,11 +185,7 @@ function startRemoteSession(screen, remoteVideoNode, stream) {
         enableMouseEvents(dataChannel);
 
         // Fetch screen size from server
-        dataChannel.send(
-          JSON.stringify({
-            command: "screensize",
-          })
-        );
+        sendDataMessage("screensize", {});
       };
 
       dataChannel.onmessage = function (event) {
@@ -261,14 +243,10 @@ function resizeCanvas(canvas, video) {
 }
 
 function disconnectSession() {
-  dataChannel.send(
-    JSON.stringify({
-      command: "terminate",
-    })
-  );
-
+  sendDataMessage("terminate", {});
   peerConnection.close();
   peerConnection = null;
+  dataChannel = null;
   enableStartStop(true);
   setStartStopTitle("Connect");
 }
