@@ -17,7 +17,7 @@ import (
 
 const (
 	httpDefaultPort   = "9000"
-	defaultStunServer = "stun:stun.l.google.com:19302"
+	defaultStunServer = "turn:webrtc.msuncloud.com:3478"
 )
 
 func main() {
@@ -62,7 +62,7 @@ func main() {
 	errors := make(chan error, 2)
 	go func() {
 		log.Printf("Server started on port %s", *httpPort)
-		errors <- http.ListenAndServeTLS(fmt.Sprintf(":%s", *httpPort),"certs/localhost.crt","certs/localhost.key", mux)
+		errors <- http.ListenAndServeTLS(fmt.Sprintf(":%s", *httpPort), "certs/localhost.crt", "certs/localhost.key", mux)
 	}()
 
 	go func() {

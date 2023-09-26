@@ -9,14 +9,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-vgo/robotgo"
 	"github.com/google/uuid"
-	"github.com/tidwall/sjson"
+	"github.com/imtiyazs/webrtc-remote-desktop/internal/config"
+	"github.com/imtiyazs/webrtc-remote-desktop/internal/encoders"
+	"github.com/imtiyazs/webrtc-remote-desktop/internal/rdisplay"
 	"github.com/pion/sdp"
 	"github.com/pion/webrtc/v2"
-	"github.com/imtiyazs/webrtc-remote-desktop/internal/encoders"
-	"github.com/imtiyazs/webrtc-remote-desktop/internal/config"
-	"github.com/go-vgo/robotgo"
-	"github.com/imtiyazs/webrtc-remote-desktop/internal/rdisplay"
+	"github.com/tidwall/sjson"
 )
 
 // RemoteScreenPeerConn is a webrtc.PeerConnection wrapper that implements the
@@ -114,7 +114,9 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 	pcconf := webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			webrtc.ICEServer{
-				URLs: []string{p.stunServer},
+				URLs:       []string{p.stunServer},
+				Username:   "msun_webrtc",
+				Credential: "3OtR1dGwFdfYUVFF",
 			},
 		},
 		SDPSemantics: webrtc.SDPSemanticsUnifiedPlan,
@@ -124,7 +126,7 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	p.connection = peerConn
 
 	peerConn.OnICEConnectionStateChange(func(connState webrtc.ICEConnectionState) {
@@ -135,7 +137,7 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 		if connState == webrtc.ICEConnectionStateDisconnected {
 			p.Close()
 		}
-		
+
 		log.Printf("Connection state: %s \n", connState.String())
 	})
 
@@ -197,13 +199,12 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 		return "", err
 	}
 
-
 	// Register data channel creation handling
 	peerConn.OnDataChannel(func(d *webrtc.DataChannel) {
 
 		type WSSMessage struct {
 			Command string
-			Data interface{}
+			Data    interface{}
 		}
 
 		incomingMessage := &WSSMessage{}

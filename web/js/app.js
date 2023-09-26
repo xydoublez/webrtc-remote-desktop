@@ -176,7 +176,11 @@ function startRemoteSession(screen, remoteVideoNode, stream) {
   return Promise.resolve()
     .then(() => {
       pc = new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        iceServers: [{
+          urls: "turn:webrtc.msuncloud.com:3478",
+          username: "msun_webrtc",
+          credential: "3OtR1dGwFdfYUVFF"
+        }],
       });
 
       dataChannel = pc.createDataChannel("messages");
